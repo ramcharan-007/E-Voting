@@ -23,11 +23,13 @@ export default function LoginPage({navigation}){
                     maxLength={12}
                     value={adhaarnumber}
                     onChange={setadhaarnumber}
-                    keyboardType='numeric' />
+                    keyboardType='numeric' 
+                    />
                 </View>
                 <View style={styles.buttonConatiner}>
                     <View  style={styles.button}>
-                    <Button title='Get OTP' onPress={() => navigation.navigate('Dashboard')}/>
+                    <Button title='Get OTP' 
+                    onPress={() => navigation.navigate('Dashboard')}/>
                     </View>
                     <View  style={styles.button}>
                     <Button title='Cancel' onPress={() => {Oncancel()}}/>

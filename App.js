@@ -7,10 +7,25 @@ import Election from "./Screens/Election";
 import News from "./Screens/News";
 import Help from "./Screens/Help";
 // import OTP from "./Screens/Verification/OTP";
+import axios from "axios";
+import { useEffect } from "react";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const fetchapi = async () => {
+    try{
+      const res = await axios.get('http://192.168.0.109:3000/')
+      console.log(res.data);
+    }catch(error){
+      console.log(error.message);
+    }
+  }
+  
+  useEffect(() => {
+    fetchapi()
+  }, [])
+  
   return (
     <NavigationContainer>
       <Stack.Navigator>
