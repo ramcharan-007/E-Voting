@@ -1,89 +1,73 @@
-// import { StyleSheet, 
-//         Text, 
-//         View, 
-//         Alert, 
-//         ActivityIndicator, 
-//         SafeAreaView, 
-//         TouchableOpacity } from 'react-native'
-// import React, {useState, useEffect} from 'react'
-// import { getArticles } from '../Backend/fetchApi';
-
-// function News(){
-//     const [loading, setloading] = useState(false);
-//     const [data, setdata ] = useState('');
-
-//     function viewData(){
-//         useEffect( () => {
-//             getArticles().then(data => {
-//                 setloading(false)
-//                 setdata(data)
-//             }), error => {
-//                     Alert.alert("Error", "Something went wrong")
-//             }
-//         },[])
-
-//         console.log(data);
-//         return new Promise((resolve, reject) => {
-//             if(loading){
-//                 resolve(data)
-//             }else{
-//                 reject(error)
-//             }
-//         })
-//     }
-
-//     return (
-//         <SafeAreaView>
-//             <View>
-//                {viewData().then((message) => {
-//                 console.log(message)
-//                }).catch((error) => {
-//                 console.log(error)
-//                })}
-//             </View>
-//         </SafeAreaView>
-//     );
-// }
-
-// export default News
-
-// const styles = StyleSheet.create({})
-
-import React, {Component} from "react";
-import { getArticles } from "../Backend/fetchApi";
-import { Alert, View, FlatList, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import NewsView from "../View/NewsView";
-export default class News extends Component{
 
-    constructor(props){
-        super(props);
+const YourComponent = () => {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [isLoading, setisLoading] = useState(true);
 
-        this.state = {
-            isLoading: true,
-            data: null
-        }
-    }
-
-    componentDidMount(){
-        getArticles().then(data => {
-            this.setState({
-                isLoading: false,
-                data: data
-            });
-        }, error => {
-            Alert.alert("Error", "Something went wrong")
+  useEffect(() => {
+    const fetchData = () => {
+      fetch(
+        "https://newsapi.org/v2/top-headlines?country=in&category=business&apiKey=cfdbbd1147b34611a5d5c4dd12c8de9b"
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              `Network response was not ok. Status: ${response.status}`
+            );
+          }
+          return response.json();
         })
-    }
+        .then((jsonData) => {
+          setData(jsonData.articles);
+          setisLoading(false);
+        })
+        .catch((error) => {
+          setError(error.message || "An error occurred");
+        });
+    };
 
-    render(){
-        console.log(this.state.data);
-        
-        return(
-            <View>
-                <FlatList
-                data={this.state.data} 
-                renderItem={(itemdata) => <NewsView props={itemdata} />} />
-            </View>
-        )
-    }
-}
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <ActivityIndicator size={"large"}/>;
+  } else {
+    return (
+      <View style={styles.container}>
+        <FlatList
+          data={data}
+          renderItem={({ item }) => (
+            <NewsView
+              author={item.author}
+              description={item.description}
+              imageUrl={`'${item.urlToImage}'`}
+              title={item.title}
+              content={item.content}
+              url={item.url}
+            />
+          )}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </View>
+    );
+  }
+};
+
+export default YourComponent;
+
+const styles = StyleSheet.create({
+  container: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+});

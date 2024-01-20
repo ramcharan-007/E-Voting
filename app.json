@@ -2,6 +2,9 @@
   "expo": {
     "name": "VotingApp",
     "slug": "VotingApp",
+    "extra": {
+      "apiUrl": "http://192.168.0.101:3000" 
+    },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

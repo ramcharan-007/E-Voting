@@ -1,13 +1,18 @@
 import {View, Text, StyleSheet, SafeAreaView, KeyboardAvoidingView, Button, TextInput} from 'react-native';
 import { useState } from 'react';
-import { Octicons } from '@expo/vector-icons';
+import { Fontisto } from '@expo/vector-icons';
 
 export default function LoginPage({navigation}){
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("")
 
-    const [adhaarnumber, setadhaarnumber] = useState()
+    function handlerLogin(){
+        console.log("Login")
+    }
 
     function Oncancel(){
-        setadhaarnumber('')
+        setEmail("");
+        setPassword("");
     }
 
     return(
@@ -16,20 +21,29 @@ export default function LoginPage({navigation}){
                 <View>
                     <Text  style={styles.heading}>Voting Application</Text>
                 </View>
-                <View style={styles.inputcontainer}>
-                <Octicons name="unverified" size={24} color="black" style={{paddingTop: 15, paddingLeft:5}} />
-                    <TextInput style={styles.input}
-                    placeholder='Adhaar Number' 
-                    maxLength={12}
-                    value={adhaarnumber}
-                    onChange={setadhaarnumber}
-                    keyboardType='numeric' 
+                <View style={styles.input}>
+                <Fontisto name="email" size={24} color="black" style={styles.icon}/>
+                    <TextInput style={styles.inputBox}
+                    placeholder='Email'
+                    value={email}
+                    onChangeText={(text) => setEmail(text)}
                     />
+                </View>
+                <View style={styles.input}>
+                <Fontisto name="email" size={24} color="black" style={styles.icon}/>
+                    <TextInput style={styles.inputBox}
+                    placeholder='Password'
+                    value={password}
+                    onChangeText={(text) => setPassword(text)}
+                    />
+                </View>
+                <View>
+                    <Text>New User? <Text onPress={() => navigation.navigate("Register")}>Register</Text></Text>
                 </View>
                 <View style={styles.buttonConatiner}>
                     <View  style={styles.button}>
-                    <Button title='Get OTP' 
-                    onPress={() => navigation.navigate('Dashboard')}/>
+                    <Button title='Login' 
+                    onPress={handlerLogin}/>
                     </View>
                     <View  style={styles.button}>
                     <Button title='Cancel' onPress={() => {Oncancel()}}/>
@@ -52,11 +66,21 @@ const styles = StyleSheet.create({
         fontSize: 30,
         marginVertical: 70,
     },
-    input: {
-        
+    input:{
+        borderColor: 'black',
+        borderRadius: 7,
+        borderWidth: 2, 
+        marginVertical: 10,
+        width:250,
+        height:40,
+        flexDirection: 'row'
+    },
+    inputBox:{
+        height:20,
         paddingVertical:2,
         paddingHorizontal: 10,
-        marginVertical: 10,   
+        marginVertical: 10,
+        width:200,
     },
     buttonConatiner:{
         width:'100%',
@@ -75,6 +99,4 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderRadius:6,
     }
-
-
 })
