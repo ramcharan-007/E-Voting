@@ -1,36 +1,81 @@
 // import { StatusBar } from "expo-status-bar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginPage from "./Screens/LoginPage";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, StackRouter } from "@react-navigation/native";
 import Dashboard from "./Screens/Dashboard";
 import Election from "./Screens/Election";
 import News from "./Screens/News";
 import Help from "./Screens/Help";
 import Admin from "./Screens/Admin";
-import 'react-native-gesture-handler';
+import "react-native-gesture-handler";
 import Register from "./Screens/Register";
 import AddCandidate from "./Screens/Admin Screens/AddCandidate";
 import AddVoters from "./Screens/Admin Screens/AddVoters";
-
+import { firebase } from "./Backend/config/config";
+import { useState, useEffect } from "react";
+import Header from "./View/Header";
+import ManageElection from "./Screens/Admin Screens/ManageElection";
+import ViewCandidates from "./Screens/Admin Screens/ViewCandidates";
+// import auth from "@react-native-firebase/auth";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  
+  const [initializing, setInitializing] = useState("");
+  const [user, setUser] = useState("");
+
+  // Hamdle user state change
+  function onAuthStateChanged(user) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = firebase.auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber;
+  }, []);
+
+  if (initializing) return null;
+
+  if (!user) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Login"
+            component={LoginPage}
+            options={{
+              headerTitle: () => <Header />,
+              headerStyle: {
+                height: 150,
+                borderBottomLeftRadius: 50,
+                borderBottomRightRadius: 50,
+              },
+            }}
+          />
+          <Stack.Screen name="Register" component={Register} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   return (
-    // <NavigationContainer>
-    //   <Stack.Navigator>
-    //     <Stack.Screen name="Login" component={LoginPage} options={{headerShown:false}} />
-    //     <Stack.Screen name="Dashboard" component={Dashboard} options={{headerShown:false}}/>
-    //     <Stack.Screen name="Election" component={Election}/>
-    //     <Stack.Screen name="News" component={News}/>
-    //     <Stack.Screen name="Help" component={Help}/>
-    //     <Stack.Screen name="Admin" component={Admin} />
-    //     <Stack.Screen name="Register" component={Register} />
-    //     <Stack.Screen name="Candidate" component={AddCandidate} />
-    //     <Stack.Screen name="Voters List" component={AddVoters} />
-    //   </Stack.Navigator>
-    // </NavigationContainer>
-    <AddCandidate />
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Dashboard"
+          component={Dashboard}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="Election" component={Election} />
+        <Stack.Screen name="News" component={News} />
+        <Stack.Screen name="Help" component={Help} />
+        <Stack.Screen name="Admin" component={Admin} />
+        <Stack.Screen name="AdminElection" component={ManageElection} />
+        <Stack.Screen name="AdminCandidate" component={AddCandidate} />
+        <Stack.Screen name="AdminVoters" component={AddVoters} />
+        <Stack.Screen name="ViewCandidates" component={ViewCandidates} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }

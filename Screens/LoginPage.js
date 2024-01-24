@@ -1,18 +1,30 @@
 import {View, Text, StyleSheet, SafeAreaView, KeyboardAvoidingView, Button, TextInput} from 'react-native';
 import { useState } from 'react';
 import { Fontisto } from '@expo/vector-icons';
+import { firebase } from '../Backend/config/config';
+import {getAuth, onAuthStateChanged} from "firebase/auth";
+
 
 export default function LoginPage({navigation}){
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("")
 
     function handlerLogin(){
-        console.log("Login")
+        navigation.navigate("Dashboard")
     }
 
     function Oncancel(){
         setEmail("");
         setPassword("");
+    }
+
+    const loginUser = async (email, password) => {
+        console.log(email, password)
+        try{
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+        }catch (error){
+            alert(error.message)
+        }
     }
 
     return(
@@ -27,6 +39,8 @@ export default function LoginPage({navigation}){
                     placeholder='Email'
                     value={email}
                     onChangeText={(text) => setEmail(text)}
+                    autoCorrect={false}
+                    autoCapitalize="none"
                     />
                 </View>
                 <View style={styles.input}>
@@ -35,6 +49,9 @@ export default function LoginPage({navigation}){
                     placeholder='Password'
                     value={password}
                     onChangeText={(text) => setPassword(text)}
+                    autoCorrect = {false}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
                     />
                 </View>
                 <View>
@@ -43,7 +60,7 @@ export default function LoginPage({navigation}){
                 <View style={styles.buttonConatiner}>
                     <View  style={styles.button}>
                     <Button title='Login' 
-                    onPress={handlerLogin}/>
+                    onPress={() => loginUser(email, password)}/>
                     </View>
                     <View  style={styles.button}>
                     <Button title='Cancel' onPress={() => {Oncancel()}}/>

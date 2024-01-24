@@ -1,9 +1,19 @@
-import { View, Text, Pressable, StyleSheet, Button } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 
-function GridView({ id, text}) {
+function GridView({ id, text, comp}) {
+
+    function move(id) {
+        const section = {
+          1: "AdminCandidate",
+          2: "AdminElection",
+          3: "AdminVoters",
+          4: "ViewCandidates"
+        };
+        return comp.navigate(section[id]);
+      }
     return (
         <View style={style.gridItem}>
-            <Pressable style={style.buttonStyle}>
+            <Pressable style={style.buttonStyle} onPress={() => move(id)}>
                 <View style={style.innerContainer}>
                     <Text>{id}</Text>
                     <Text>{text}</Text>

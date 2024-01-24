@@ -14,16 +14,20 @@ const DATA = [
     {
         id: '3',
         title: 'Manage Voters'
+    },
+    {
+        id: '4',
+        title: 'View Candidates'
     }
 ];
 
 
-function Admin() {
+function Admin({navigation}) {
     return (
         <FlatList
         key={DATA.id}
             data={DATA}
-            renderItem={(itemData) => <GridView text={itemData.item.title} id={itemData.item.id} comp={itemData.item.comp} />}
+            renderItem={(itemData) => <GridView text={itemData.item.title} id={itemData.item.id} comp={navigation} />}
             keyExtractor={item => item.id}
             numColumns={2}
         />

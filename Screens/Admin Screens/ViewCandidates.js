@@ -4,10 +4,10 @@ import {ref, onValue } from "firebase/database";
 import {useState, useEffect} from "react";
 
 
-const AddVoters = () => {
+const ViewCandidates = () => {
   const  [vdata, setData] = useState([]);
   useEffect( () => {
-    const starCountRef = ref(db, "user/");
+    const starCountRef = ref(db, "candidates/");
     onValue(starCountRef, (snapshot)=> {
       const data = snapshot.val();
       const newdata = Object.keys(data).map(key => ({
@@ -20,13 +20,14 @@ const AddVoters = () => {
   }, [])
   return (
     <View style={styles.container}>
-      <Text>Voters List</Text>
+      <Text>Candidate's List</Text>
       {
         vdata.map((item, index) =>{
           return (
             <View key={index} style={styles.viewbox}>
               <Text>{item.name}</Text>
-              <Text>{item.email}</Text>
+              <Text>{item.department}</Text>
+              <Text>{item.age}</Text>
               <Text>{item.phone}</Text>
               </View>
           )
@@ -36,7 +37,7 @@ const AddVoters = () => {
   )
 }
 
-export default AddVoters;
+export default ViewCandidates;
 
 const styles = StyleSheet.create({
   container:{
