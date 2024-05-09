@@ -29,13 +29,14 @@ export default function Register({navigation}){
             email: email,
             phone: phone,
             metamaskWalletAddress: null,
+            canVote: false
           });
       
           // Display a success message
           Alert.alert('Success', 'User registered successfully!');
       
           // Navigate to the login screen
-          navigation.navigate('Login');
+          navigation.navigate('LoginPage');
         } catch (error) {
           // Display an error message
           Alert.alert('Error', error.message);

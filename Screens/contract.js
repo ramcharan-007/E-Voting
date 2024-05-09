@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { ethers } from 'ethers';
 
-const ElectionContractAddress = 'YOUR_CONTRACT_ADDRESS'; // Replace with your actual contract address
+const ElectionContractAddress = '0x014d07ca5c324485F55296ccdBFc68bcFdfEc963'; // Replace with your actual contract address
 
 const Election = () => {
   const [contract, setContract] = useState(null);

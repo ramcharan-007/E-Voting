@@ -1,14 +1,20 @@
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView , Dimensions} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView , Dimensions, Alert} from 'react-native';
 
 export default function DashboardView({ id, name, navigate }) {
   function move(id) {
-    const section = {
-      1: "Election",
-      2: "News",
-      3: "Help",
-    };
+  const section = {
+    1: "ElectionStarted",
+    2: "News",
+    3: "Help",
+  };
+
+  if (section[id]) {
     return navigate.navigate(section[id]);
+  } else {
+    console.warn(`Unrecognized section ID: ${id}`);
+    Alert.alert("Error", "Invalid section ID");
   }
+}
 
   const backgroundColors = {
     1: '#FF6961', // Red
@@ -19,6 +25,7 @@ export default function DashboardView({ id, name, navigate }) {
   const containerColor = backgroundColors[id] || '#ffffff'; // Default White
 
   return (
+    <>
     <SafeAreaView>
     <View style={[styles.container, { backgroundColor: containerColor }]}>
       <TouchableOpacity style={styles.touchStyle} onPress={() => move(id)}>
@@ -26,7 +33,9 @@ export default function DashboardView({ id, name, navigate }) {
         {/* <Text style={styles.nameText}>{name}</Text> */}
       </TouchableOpacity>
     </View>
+    
     </SafeAreaView>
+    </>
   );
 }
 

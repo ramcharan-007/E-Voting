@@ -17,6 +17,7 @@
     "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/netinfo": "11.1.0",
     "@react-native-picker/picker": "^2.6.1",
+    "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/native": "^6.1.15",
     "@react-navigation/native-stack": "^6.9.23",
     "@truffle/hdwallet-provider": "^2.1.15",

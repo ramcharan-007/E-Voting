@@ -1,4 +1,4 @@
-import { View, Button, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Button, Text, StyleSheet, Pressable, TouchableOpacity,Alert } from 'react-native';
 import { FlatList } from 'react-native';
 import GridView from "./View/GridView";
 
@@ -18,12 +18,17 @@ const DATA = [
     {
         id: '4',
         title: 'View Candidates'
+    },
+    {
+        id: '5',
+        title: 'Result'
     }
 ];
 
 
 function Admin({navigation}) {
     return (
+        <>
         <FlatList
         key={DATA.id}
             data={DATA}
@@ -31,6 +36,10 @@ function Admin({navigation}) {
             keyExtractor={item => item.id}
             numColumns={2}
         />
+        <View>
+        <TouchableOpacity onPress={() =>{Alert.alert("You have been logged out!!"); navigation.navigate("Login")}}><Text>Log Out</Text></TouchableOpacity>
+        </View>
+        </>
     );
 }
 

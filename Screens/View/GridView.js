@@ -7,7 +7,8 @@ function GridView({ id, text, comp}) {
           1: "AdminCandidate",
           2: "AdminElection",
           3: "AdminVoters",
-          4: "ViewCandidates"
+          4: "ViewCandidates",
+          5: "Result"
         };
         return comp.navigate(section[id]);
       }
@@ -15,7 +16,6 @@ function GridView({ id, text, comp}) {
         <View style={style.gridItem}>
             <Pressable style={style.buttonStyle} onPress={() => move(id)}>
                 <View style={style.innerContainer}>
-                    <Text>{id}</Text>
                     <Text>{text}</Text>
                 </View>
             </Pressable >

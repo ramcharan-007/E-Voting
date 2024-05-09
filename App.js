@@ -13,11 +13,14 @@ import AddCandidate from "./Screens/Admin Screen/AddCandidate";
 import AddVoters from "./Screens/Admin Screen/AddVoters";
 import { firebase } from "./Backend/config/config";
 import { useState, useEffect } from "react";
-import Header from "./Screens/View/Header";
 import ManageElection from "./Screens/Admin Screen/ManageElection";
 import ViewCandidates from "./Screens/Admin Screen/ViewCandidates";
+import ElectionResults from "./Screens/Admin Screen/Result";
 // import auth from "@react-native-firebase/auth";
 import ElectionStart from "./Screens/Admin Screen/ElectionStart";
+import ElectionStarted from "./Screens/ElectionStarted";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +33,7 @@ export default function App() {
     setUser(user);
     if (initializing) setInitializing(false);
   }
+
 
   useEffect(() => {
     const subscriber = firebase.auth().onAuthStateChanged(onAuthStateChanged);
@@ -45,14 +49,6 @@ export default function App() {
           <Stack.Screen
             name="Login"
             component={LoginPage}
-            options={{
-              headerTitle: () => <Header />,
-              headerStyle: {
-                height: 150,
-                borderBottomLeftRadius: 50,
-                borderBottomRightRadius: 50,
-              },
-            }}
           />
           <Stack.Screen name="Register" component={Register} />
         </Stack.Navigator>
@@ -77,6 +73,8 @@ export default function App() {
         <Stack.Screen name="AdminVoters" component={AddVoters} />
         <Stack.Screen name="ViewCandidates" component={ViewCandidates} />
         <Stack.Screen name="StartEletion" component={ElectionStart} />
+        <Stack.Screen name="Result" component={ElectionResults} />
+        <Stack.Screen name="ElectionStarted" component={ElectionStarted} />
       </Stack.Navigator>
     </NavigationContainer>
   );

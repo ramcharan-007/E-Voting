@@ -4,8 +4,8 @@ const compiledElection = require('./builds/ElectionFactory.json');
 const { stringify } = require('querystring');
 
 const provider = new HDWalletProvider(
-    'pumpkin room sauce begin find lounge furnace inform panda penalty abstract pulp',
-    'http://127.0.0.1:7545'
+    'stone thrive bacon twenty badge stomach power pony retreat pair friend token',
+    'http://127.0.0.1:8545'
 );
 
 const web3 = new Web3(provider);
