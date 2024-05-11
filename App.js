@@ -19,8 +19,6 @@ import ElectionResults from "./Screens/Admin Screen/Result";
 // import auth from "@react-native-firebase/auth";
 import ElectionStart from "./Screens/Admin Screen/ElectionStart";
 import ElectionStarted from "./Screens/ElectionStarted";
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
 
 const Stack = createNativeStackNavigator();
 
@@ -49,8 +47,9 @@ export default function App() {
           <Stack.Screen
             name="Login"
             component={LoginPage}
+            options={{ headerShown: false }}
           />
-          <Stack.Screen name="Register" component={Register} />
+          <Stack.Screen name="Register" component={Register} options={{ headerShown: false }}/>
         </Stack.Navigator>
       </NavigationContainer>
     );
@@ -67,7 +66,7 @@ export default function App() {
         <Stack.Screen name="Election" component={Election} />
         <Stack.Screen name="News" component={News} />
         <Stack.Screen name="Help" component={Help} />
-        <Stack.Screen name="Admin" component={Admin} />
+        <Stack.Screen name="Admin" component={Admin} options={{ headerShown: false }} />
         <Stack.Screen name="AdminElection" component={ManageElection} />
         <Stack.Screen name="AdminCandidate" component={AddCandidate} />
         <Stack.Screen name="AdminVoters" component={AddVoters} />

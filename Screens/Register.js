@@ -47,7 +47,8 @@ export default function Register({navigation}){
     return (
         <SafeAreaView style={styles.container}>
             <Text style={{fontFamily:'sans-serif',fontSize:30, margin:30, fontWeight:'bold'}}>Voting Help Line</Text>
-            <Text style={{fontFamily:'sans-serif',fontSize:25,marginBottom:5, fontWeight:'900'}}>Register</Text>
+            <View style={styles.inputCard}>
+            <Text style={{fontFamily:'sans-serif',fontSize:25,marginBottom:5, fontWeight:'900', textAlign:"center"}}>Register</Text>
             <View style={styles.input}>
                 <MaterialIcons name="drive-file-rename-outline" size={24} color="black" style={styles.icon}/>
                 <TextInput placeholder='Name' value={name} onChangeText={(text) => setname(text)} style={styles.inputBox}/>
@@ -68,8 +69,9 @@ export default function Register({navigation}){
                 <Text>Already have account <Text style={{color:'#007FFF', fontSize:20}} onPress={() => navigation.navigate("Login")}>Login</Text> ?</Text>
             </View>
             <View  style={styles.button}>
-            <View style={{margin:10}}>
+            <View style={{margin:10, textAlign:"center"}}>
                 <Button title='Register' onPress={handleSignUp}/>
+            </View>
             </View>
             </View>
         </SafeAreaView>
@@ -105,5 +107,16 @@ const styles = StyleSheet.create({
     button:{
         flexDirection:'row',
         margin:7,
-    }
+        justifyContent:"center"
+    },
+    inputCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 20,
+        elevation: 5, // Elevation for Android shadows
+        shadowColor: '#000', // Shadow color for iOS shadows
+        shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
+        shadowOpacity: 0.25, // Shadow opacity for iOS shadows
+        shadowRadius: 3.84, // Shadow radius for iOS shadows
+      },
 })

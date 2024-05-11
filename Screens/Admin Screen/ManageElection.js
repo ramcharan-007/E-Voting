@@ -238,6 +238,10 @@ const ManageElection = () => {
   };
 
   const renderModalContent = () => (
+    <>
+    <View style={{justifyContent:"center", marginTop:100}}>
+      <Text style={{fontSize:30, textAlign:"center", fontWeight:"bold"}}>Admin Functions</Text>
+    </View>
     <View style={styles.modalContainer}>
       <TouchableOpacity
         style={styles.modalButton}
@@ -257,13 +261,14 @@ const ManageElection = () => {
       >
         <Text style={styles.modalButtonText}>Show Selected</Text>
       </TouchableOpacity>
-      <TouchableOpacity
+    </View>
+    <TouchableOpacity
         style={styles.modalButton}
         onPress={() => setShowModal(false)}
       >
         <Text style={styles.modalButtonText}>Close</Text>
       </TouchableOpacity>
-    </View>
+    </>
   );
 
   return (
@@ -282,11 +287,10 @@ const ManageElection = () => {
       ) : (
         <>
           <View>
-            <Button
-              title="Manage Election"
-              onPress={() => setShowModal(true)}
-            />
-            <Text>No On Going Elections</Text>
+          <TouchableOpacity onPress={() => setShowModal(true)} style={styles.modalButton}>
+            <Text style={styles.modalButtonText}>Manage Election</Text>
+          </TouchableOpacity>
+            <Text style={{fontSize:20, fontWeight:"bold", textAlign:"center"}}>No On Going Elections</Text>
           </View>
         </>
       )}
@@ -295,8 +299,8 @@ const ManageElection = () => {
         {renderModalContent()}
       </Modal>
       <Modal visible={showAddCandidateModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text>Add Candidate</Text>
+        <View style={styles.showVoterCandidateModal}>
+          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Add Candidate</Text>
           <FlatList
             data={candidates}
             renderItem={({ item }) => (
@@ -312,15 +316,14 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-          <Button
-            title="Close"
-            onPress={() => setShowAddCandidateModal(false)}
-          />
+           <TouchableOpacity style={styles.modalButton} onPress={() => setShowAddCandidateModal(false)}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
       <Modal visible={showAddVoterModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text>Add Voter</Text>
+        <View style={styles.showVoterCandidateModal}>
+          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Add Voter</Text>
           <FlatList
             data={voters}
             renderItem={({ item }) => (
@@ -336,12 +339,14 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-          <Button title="Close" onPress={() => setShowAddVoterModal(false)} />
+          <TouchableOpacity style={styles.modalButton} onPress={() => {setShowAddVoterModal(false)}}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
       <Modal visible={showSelectedModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text>Selected Candidates</Text>
+        <View style={styles.showVoterCandidateModal}>
+          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Selected Candidates</Text>
           <FlatList
             data={candidates.filter((candidate) =>
               selectedCandidates.includes(candidate.id)
@@ -353,7 +358,7 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-          <Text>Selected Voters</Text>
+          <Text  style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Selected Voters</Text>
           <FlatList
             data={voters.filter((voter) => selectedVoters.includes(voter.id))}
             renderItem={({ item }) => (
@@ -388,9 +393,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    margin:50,
+    marginTop:100,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5, // Elevation for Android shadows
+    shadowColor: '#000', // Shadow color for iOS shadows
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
+    shadowOpacity: 0.25, // Shadow opacity for iOS shadows
+    shadowRadius: 3.84, // Shadow radius for iOS shadows
+  },
+  showVoterCandidateModal:{
+    marginTop:30,
+    justifyContent:"center",
+    textAlign:"center",
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5, // Elevation for Android shadows
+    shadowColor: '#000', // Shadow color for iOS shadows
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
+    shadowOpacity: 0.25, // Shadow opacity for iOS shadows
+    shadowRadius: 3.84, // Shadow radius for iOS shadows
   },
   viewbox: {
     borderColor: "black",
@@ -405,6 +430,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+    borderColor: "black",
+    borderWidth: 2,
+    borderRadius: 7,
+    padding: 10,
+    margin: 10,
+    justifyContent:"center",
+    width: Dimensions.get("window").width * 0.8,
   },
   selectedItem: {
     backgroundColor: "#e0e0e0",
@@ -429,7 +461,8 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     padding: 10,
     margin: 10,
-    width: Dimensions.get("window").width * 0.9,
+    justifyContent:"center",
+    width: Dimensions.get("window").width * 0.8,
   },
   candidateCard: {
     padding: 15,

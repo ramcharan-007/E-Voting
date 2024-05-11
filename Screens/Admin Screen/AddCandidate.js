@@ -46,12 +46,14 @@ import {
         >
           Voting Help Line
         </Text>
+        <View style={styles.inputCard}>
         <Text
           style={{
             fontFamily: "sans-serif",
             fontSize: 25,
             marginBottom: 5,
             fontWeight: "900",
+            textAlign:"center"
           }}
         >
           Register Candidates
@@ -117,6 +119,7 @@ import {
             <Button title="Add" onPress={handleRegister} />
           </View>
         </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -149,6 +152,17 @@ import {
     button: {
       flexDirection: "row",
       margin: 7,
+      justifyContent:"center"
+    },
+    inputCard: {
+      backgroundColor: '#ffffff',
+      borderRadius: 10,
+      padding: 20,
+      elevation: 5, // Elevation for Android shadows
+      shadowColor: '#000', // Shadow color for iOS shadows
+      shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
+      shadowOpacity: 0.25, // Shadow opacity for iOS shadows
+      shadowRadius: 3.84, // Shadow radius for iOS shadows
     },
   });
   

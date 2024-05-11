@@ -5,7 +5,7 @@ import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 export default function NewsView({ author, title, description, imageUrl, content, url }) {
   return (
     <TouchableOpacity style={styles.container} onPress={() => Linking.openURL(url)}>
-      <Image source={{ uri: imageUrl}} style={styles.image} />
+      {/* <Image source={{ uri: imageUrl}} style={styles.image} /> */}
       <View style={styles.textContainer}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
         <Text style={styles.author} numberOfLines={1}>{author}</Text>

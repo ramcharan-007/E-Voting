@@ -57,7 +57,7 @@ const LoginPage = ({ navigation }) => {
     }
   };
 
-
+//To set admi privileage
   // const setAdminStatus = async (uid, isAdmin) => {
   //   try {
   //     await update(ref(db, `users/${uid}`), { isAdmin });
@@ -81,7 +81,7 @@ const LoginPage = ({ navigation }) => {
         <View>
           <Text style={styles.heading}>Voting Application</Text>
         </View>
-
+        <View style={styles.inputCard}>
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
@@ -120,7 +120,7 @@ const LoginPage = ({ navigation }) => {
                 }
               />
             </View>
-
+            
             <Text>
               New User?
               <Text
@@ -145,6 +145,7 @@ const LoginPage = ({ navigation }) => {
             </View>
           </>
         )}
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -154,13 +155,14 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 70,
+    marginTop: 130,
   },
   heading: {
     fontFamily: "sans-serif",
     fontWeight: "bold",
     fontSize: 30,
-    marginVertical: 70,
+    marginVertical: 30,
+    textAlign:"center"
   },
   inputContainer: {
     flexDirection: "row",
@@ -185,6 +187,16 @@ const styles = StyleSheet.create({
   },
   button: {
     marginHorizontal: 20,
+  },
+  inputCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5, // Elevation for Android shadows
+    shadowColor: '#000', // Shadow color for iOS shadows
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
+    shadowOpacity: 0.25, // Shadow opacity for iOS shadows
+    shadowRadius: 3.84, // Shadow radius for iOS shadows
   },
 });
 
