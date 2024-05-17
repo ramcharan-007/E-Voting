@@ -14,6 +14,16 @@ import { ref, onValue, set, update, get, push } from "firebase/database";
 import { db } from "../../Backend/config/config";
 import { useNavigation } from "@react-navigation/native";
 import StartElection from "./ElectionStart";
+import { W3mButton } from "@web3modal/wagmi-react-native";
+import {
+  useAccount,
+  useContractRead,
+  useContractWrite,
+  usePrepareContractWrite,
+  useSignMessage,
+  useWaitForTransaction,
+} from "wagmi";
+import { ContractABI, ContractAddress } from "../../Constants/Constants";
 
 const ManageElection = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +37,48 @@ const ManageElection = () => {
   const [showSelectedModal, setShowSelectedModal] = useState(false);
   const [isElectionOngoing, setIsElectionOngoing] = useState(false);
   const [candidatesWithVotes, setCandidatesWithVotes] = useState([]);
+  const { address, isConnected, isDisconnected } = useAccount();
+
+  // const { data, isError, isLoading:isLoadingSignature, isSuccess, signMessage } = useSignMessage({
+  //   message: 'gm wagmi frens'
+  // })
+
+  const {
+    data: ContractName,
+    isError,
+    isLoading: iscontractLoading,
+    isSuccess,
+  } = useContractRead({
+    address: "0x1918469F87b66Bb4226bF3e197cd44c620045cA9",
+    abi: ContractABI,
+    functionName: "getResult",
+  });
+
+  const waitforResultTransaction = useWaitForTransaction({
+    hash: ContractName?.hash,
+  });
+
+  const { config } = usePrepareContractWrite({
+    address: "0x1918469F87b66Bb4226bF3e197cd44c620045cA9",
+    abi: ContractABI,
+    functionName: "initialize",
+    args: [selectedCandidates, selectedVoters],
+    account: "0xaEBAc2c6c71e433e308e08ADD5D2A211e3e184AC",
+    // chainId: 11155111, // for sepolia
+    // chainId: 59140 // for linea gerolia
+    chainId: 137,
+  });
+
+  console.log(ContractName);
+  const {
+    data: writeCOntractName,
+    isLoading: iswriteCOntractLoading,
+    isSuccess: iswriteContractSuccess,
+    write,
+  } = useContractWrite(config);
+  const waitForTransaction = useWaitForTransaction({
+    hash: writeCOntractName?.hash,
+  });
 
   const navigation = useNavigation();
 
@@ -49,7 +101,7 @@ const ManageElection = () => {
               ...candidatesData[key],
             }));
             setCandidatesWithVotes(candidatesList); // Set candidates in state
-            console.log("this",candidatesList);
+            console.log("this", candidatesList);
           }
         } else {
           setIsElectionOngoing(false);
@@ -101,10 +153,8 @@ const ManageElection = () => {
       setIsLoading(false); // End loading
     };
 
-    loadData(); 
+    loadData();
   }, [db]);
-
-  
 
   const toggleCandidateSelection = (id) => {
     if (selectedCandidates.includes(id)) {
@@ -122,7 +172,6 @@ const ManageElection = () => {
     } else {
       setSelectedVoters([...selectedVoters, id]);
     }
-    
   };
 
   const handleStartElection = async () => {
@@ -132,9 +181,6 @@ const ManageElection = () => {
     const currentStatus = statusSnapshot.val()
       ? statusSnapshot.val().status
       : null;
-
-
-    
 
     // Check if there is an ongoing election
     if (currentStatus && currentStatus === "ongoing") {
@@ -149,40 +195,47 @@ const ManageElection = () => {
 
     try {
       // Set the election state to 'ongoing'
-      await set(ref(db, "election/state"), {
-        status: "ongoing",
-      });
+      write();
 
-      // Create a new object with each candidate's name as a key and their details (including `voteCount`) as the value
-      const candidatesWithVoteCount = {};
+      // Wait for the transaction to be confirmed
+      unknow();
 
-      // Loop through the candidate names and add an entry for each with `voteCount` set to 0
-      selectedCandidates.forEach((name) => {
-        console.log(name);
-        candidatesWithVoteCount[name] = {
-          voteCount: 0,
-        };
-      });
-      setIsElectionOngoing(true);
-      console.log(candidatesWithVoteCount);
-      // Set the candidates in the database with the `voteCount` initialized to 0
-      set(ref(db, "election/candidates"), candidatesWithVoteCount)
-        .then(() => {
-          console.log("Candidates added with initial vote count.");
-        })
-        .catch((error) => {
-          console.error("Error setting candidates:", error);
+      async function unknow() {
+        await set(ref(db, "election/state"), {
+          status: "ongoing",
         });
 
-      // Set canVote to true for all selected voters
-      const updates = {}; // To hold updates for each voter
+        // Create a new object with each candidate's name as a key and their details (including `voteCount`) as the value
+        const candidatesWithVoteCount = {};
 
-      selectedVoters.forEach((uid) => {
-        updates[`users/${uid}/canVote`] = true;
-      });
+        // Loop through the candidate names and add an entry for each with `voteCount` set to 0
+        selectedCandidates.forEach((name) => {
+          console.log(name);
+          candidatesWithVoteCount[name] = {
+            voteCount: 0,
+          };
+        });
+        setIsElectionOngoing(true);
+        console.log(candidatesWithVoteCount);
+        // Set the candidates in the database with the `voteCount` initialized to 0
+        set(ref(db, "election/candidates"), candidatesWithVoteCount)
+          .then(() => {
+            console.log("Candidates added with initial vote count.");
+          })
+          .catch((error) => {
+            console.error("Error setting candidates:", error);
+          });
 
-      await update(ref(db), updates);
+        // Set canVote to true for all selected voters
+        const updates = {}; // To hold updates for each voter
 
+        selectedVoters.forEach((uid) => {
+          updates[`users/${uid}/canVote`] = true;
+        });
+
+        await update(ref(db), updates);
+        Alert.alert("Alert","Election Initiated");
+      }
       // Navigate to StartEletion
       navigation.navigate("StartEletion");
     } catch (error) {
@@ -194,75 +247,86 @@ const ManageElection = () => {
   const handleEndElection = async () => {
     try {
       // Step 1: Read data from 'election/candidates'
-      const candidatesRef = ref(db, 'election/candidates');
+      const candidatesRef = ref(db, "election/candidates");
       const snapshot = await get(candidatesRef);
-      
-      if (snapshot.exists()) {
-        const candidatesData = snapshot.val();
-  
-        // Find the candidate with the highest votes
-      let highestVotes = -1; // Initialize with a low value
-      let winner = null; // No winner initially
 
-      // Iterate through the candidates to find the one with the most votes
-      for (const [name, details] of Object.entries(candidatesData)) {
-        if (details.voteCount > highestVotes) {
-          highestVotes = details.voteCount; // Update highest votes
-          winner = name; // Update winner
+      if (isSuccess && waitforResultTransaction) {
+        Alert.alert("Success!!", `Result recorded in blockchain`);
+      }
+      resultFUnction();
+
+      async function resultFUnction() {
+        if (snapshot.exists()) {
+          const candidatesData = snapshot.val();
+
+          // Find the candidate with the highest votes
+          let highestVotes = -1; // Initialize with a low value
+          let winner = null; // No winner initially
+
+          // Iterate through the candidates to find the one with the most votes
+          for (const [name, details] of Object.entries(candidatesData)) {
+            if (details.voteCount > highestVotes) {
+              highestVotes = details.voteCount; // Update highest votes
+              winner = name; // Update winner
+            }
+          }
+
+          // Step 2: Generate a unique ID and write data to 'Result/uniqueID'
+          const uniqueID = Date.now().toString(); // Unique ID based on timestamp
+          await set(ref(db, `Result/${uniqueID}`), {
+            candidates: candidatesData, // Store all candidates
+            winner, // Store the name of the winner
+          });
+
+          // Step 3: Clear data in 'election/candidates'
+          await set(candidatesRef, null); // Setting to null removes the data
+
+          console.log(
+            "Candidates data transferred and cleared. and winner is ",
+            winner
+          );
+        } else {
+          console.warn("No candidates data found.");
         }
+
+        // Update the status in the Firebase Realtime Database to "noElections"
+        await set(ref(db, "election/state"), "noElections");
+        setIsElectionOngoing(false);
+        console.log("Election status updated to noElections.");
       }
-
-      // Step 2: Generate a unique ID and write data to 'Result/uniqueID'
-      const uniqueID = Date.now().toString(); // Unique ID based on timestamp
-      await set(ref(db, `Result/${uniqueID}`), {
-        candidates: candidatesData, // Store all candidates
-        winner, // Store the name of the winner
-      });
-
-
-        // Step 3: Clear data in 'election/candidates'
-        await set(candidatesRef, null); // Setting to null removes the data
-  
-        console.log('Candidates data transferred and cleared. and winner is ', winner);
-      } else {
-        console.warn('No candidates data found.');
-      }
-  
-      // Update the status in the Firebase Realtime Database to "noElections"
-      await set(ref(db, 'election/state'), 'noElections');
-      setIsElectionOngoing(false);
-      console.log('Election status updated to noElections.');
     } catch (error) {
-      console.error('Error during end election process:', error);
+      console.error("Error during end election process:", error);
     }
   };
 
   const renderModalContent = () => (
     <>
-    <View style={{justifyContent:"center", marginTop:100}}>
-      <Text style={{fontSize:30, textAlign:"center", fontWeight:"bold"}}>Admin Functions</Text>
-    </View>
-    <View style={styles.modalContainer}>
+      <View style={{ justifyContent: "center", marginTop: 100 }}>
+        <Text style={{ fontSize: 30, textAlign: "center", fontWeight: "bold" }}>
+          Admin Functions
+        </Text>
+      </View>
+      <View style={styles.modalContainer}>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => setShowAddCandidateModal(true)}
+        >
+          <Text style={styles.modalButtonText}>Add Candidate</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => setShowAddVoterModal(true)}
+        >
+          <Text style={styles.modalButtonText}>Add Voter</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => setShowSelectedModal(true)}
+        >
+          <Text style={styles.modalButtonText}>Show Selected</Text>
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity
-        style={styles.modalButton}
-        onPress={() => setShowAddCandidateModal(true)}
-      >
-        <Text style={styles.modalButtonText}>Add Candidate</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.modalButton}
-        onPress={() => setShowAddVoterModal(true)}
-      >
-        <Text style={styles.modalButtonText}>Add Voter</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.modalButton}
-        onPress={() => setShowSelectedModal(true)}
-      >
-        <Text style={styles.modalButtonText}>Show Selected</Text>
-      </TouchableOpacity>
-    </View>
-    <TouchableOpacity
         style={styles.modalButton}
         onPress={() => setShowModal(false)}
       >
@@ -271,14 +335,29 @@ const ManageElection = () => {
     </>
   );
 
+  function isWalletConnected() {
+    if (isConnected) {
+      setShowModal(true);
+    } else {
+      Alert.alert(
+        "Alert",
+        "Connect Your Web3 Wallet in order to initiate an election"
+      );
+    }
+  }
+
   return (
     <View style={styles.container}>
+      <W3mButton />
       {isElectionOngoing ? (
         <>
           <View style={styles.modalContainer}>
-            <StartElection/>
+            <StartElection />
             <View>
-              <TouchableOpacity style={styles.modalButton} onPress={() => handleEndElection()}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => handleEndElection()}
+              >
                 <Text style={styles.modalButtonText}>End</Text>
               </TouchableOpacity>
             </View>
@@ -287,10 +366,17 @@ const ManageElection = () => {
       ) : (
         <>
           <View>
-          <TouchableOpacity onPress={() => setShowModal(true)} style={styles.modalButton}>
-            <Text style={styles.modalButtonText}>Manage Election</Text>
-          </TouchableOpacity>
-            <Text style={{fontSize:20, fontWeight:"bold", textAlign:"center"}}>No On Going Elections</Text>
+            <TouchableOpacity
+              onPress={() => isWalletConnected()}
+              style={styles.modalButton}
+            >
+              <Text style={styles.modalButtonText}>Manage Election</Text>
+            </TouchableOpacity>
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", textAlign: "center" }}
+            >
+              No On Going Elections
+            </Text>
           </View>
         </>
       )}
@@ -300,7 +386,16 @@ const ManageElection = () => {
       </Modal>
       <Modal visible={showAddCandidateModal} animationType="slide">
         <View style={styles.showVoterCandidateModal}>
-          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Add Candidate</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              margin: 10,
+            }}
+          >
+            Add Candidate
+          </Text>
           <FlatList
             data={candidates}
             renderItem={({ item }) => (
@@ -316,14 +411,26 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-           <TouchableOpacity style={styles.modalButton} onPress={() => setShowAddCandidateModal(false)}>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setShowAddCandidateModal(false)}
+          >
             <Text style={styles.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
       <Modal visible={showAddVoterModal} animationType="slide">
         <View style={styles.showVoterCandidateModal}>
-          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Add Voter</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              margin: 10,
+            }}
+          >
+            Add Voter
+          </Text>
           <FlatList
             data={voters}
             renderItem={({ item }) => (
@@ -339,14 +446,29 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-          <TouchableOpacity style={styles.modalButton} onPress={() => {setShowAddVoterModal(false)}}>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => {
+              setShowAddVoterModal(false);
+            }}
+          >
             <Text style={styles.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
       <Modal visible={showSelectedModal} animationType="slide">
         <View style={styles.showVoterCandidateModal}>
-          <Text style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Selected Candidates</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              margin: 10,
+            }}
+          >
+            Selected Candidates
+          </Text>
+
           <FlatList
             data={candidates.filter((candidate) =>
               selectedCandidates.includes(candidate.id)
@@ -358,7 +480,16 @@ const ManageElection = () => {
             )}
             keyExtractor={(item) => item.id}
           />
-          <Text  style={{textAlign:"center", fontSize:30, fontWeight:"bold", margin:10}}>Selected Voters</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              margin: 10,
+            }}
+          >
+            Selected Voters
+          </Text>
           <FlatList
             data={voters.filter((voter) => selectedVoters.includes(voter.id))}
             renderItem={({ item }) => (
@@ -374,6 +505,7 @@ const ManageElection = () => {
           >
             <Text style={styles.modalButtonText}>Start Election</Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.modalButton}
             onPress={() => setShowSelectedModal(false)}
@@ -389,30 +521,30 @@ const ManageElection = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    // justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    margin:50,
-    marginTop:100,
-    backgroundColor: '#ffffff',
+    margin: 50,
+    marginTop: 80,
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 20,
     elevation: 5, // Elevation for Android shadows
-    shadowColor: '#000', // Shadow color for iOS shadows
+    shadowColor: "#000", // Shadow color for iOS shadows
     shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
     shadowOpacity: 0.25, // Shadow opacity for iOS shadows
     shadowRadius: 3.84, // Shadow radius for iOS shadows
   },
-  showVoterCandidateModal:{
-    marginTop:30,
-    justifyContent:"center",
-    textAlign:"center",
-    backgroundColor: '#ffffff',
+  showVoterCandidateModal: {
+    marginTop: 30,
+    justifyContent: "center",
+    textAlign: "center",
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 20,
     elevation: 5, // Elevation for Android shadows
-    shadowColor: '#000', // Shadow color for iOS shadows
+    shadowColor: "#000", // Shadow color for iOS shadows
     shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS shadows
     shadowOpacity: 0.25, // Shadow opacity for iOS shadows
     shadowRadius: 3.84, // Shadow radius for iOS shadows
@@ -435,7 +567,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     padding: 10,
     margin: 10,
-    justifyContent:"center",
+    justifyContent: "center",
     width: Dimensions.get("window").width * 0.8,
   },
   selectedItem: {
@@ -461,7 +593,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     padding: 10,
     margin: 10,
-    justifyContent:"center",
+    justifyContent: "center",
     width: Dimensions.get("window").width * 0.8,
   },
   candidateCard: {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
 import { ref, get } from 'firebase/database';
 import { db } from '../../Backend/config/config';
 
@@ -51,38 +51,44 @@ const ElectionResults = () => {
     fetchResults();
   }, []);
 
+  const renderItem = ({ item }) => (
+    <View style={styles.electionBlock}>
+      <Text style={styles.electionHeader}>
+        Election ID: {item.electionId}
+      </Text>
+
+      <Text style={styles.heading}>Candidates</Text>
+      {item.candidates.map((candidate, index) => (
+        <View key={index} style={styles.resultCard}>
+          <Text style={styles.resultText}>
+            {candidate.name}: {candidate.voteCount} votes
+          </Text>
+        </View>
+      ))}
+
+      {item.winner && (
+        <View style={styles.winnerCard}>
+          <Text style={styles.winnerText}>
+            Winner: {item.winner.name} with {item.winner.voteCount} votes
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Election Results</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" /> // Loading indicator
-      ) : electionResults.length === 0 ? (
-        <Text>No results available.</Text>
       ) : (
-        electionResults.map((result) => (
-          <View key={result.electionId} style={styles.electionBlock}>
-            <Text style={styles.electionHeader}>
-              Election ID: {result.electionId}
-            </Text>
-
-            <Text style={styles.heading}>Candidates</Text>
-            {result.candidates.map((candidate, index) => (
-              <View key={index} style={styles.resultCard}>
-                <Text style={styles.resultText}>
-                  {candidate.name}: {candidate.voteCount} votes
-                </Text>
-              </View>
-            ))}
-
-            {result.winner && (
-              <View style={styles.winnerCard}>
-                <Text style={styles.winnerText}>
-                  Winner: {result.winner.name} with {result.winner.voteCount} votes
-                </Text>
-              </View>
-            )}
-          </View>
-        ))
+        <FlatList
+          data={electionResults}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.electionId}
+          contentContainerStyle={{ flexGrow: 1 }}
+          ListEmptyComponent={<Text>No results available.</Text>}
+        />
       )}
     </View>
   );
@@ -93,6 +99,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
+    margin:20
   },
   heading: {
     fontSize: 24,

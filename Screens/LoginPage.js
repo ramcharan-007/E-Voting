@@ -45,7 +45,7 @@ const LoginPage = ({ navigation }) => {
         const userData = snapshot.val();
 
         if (userData && userData.isAdmin) {
-          navigation.navigate('Admin'); // Navigate to admin page
+          navigation.replace('Admin'); // Navigate to admin page
         } else {
           navigation.navigate('Dashboard'); // Navigate to user dashboard
         }

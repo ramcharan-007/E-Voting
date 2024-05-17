@@ -36,7 +36,7 @@ export default function Register({navigation}){
           Alert.alert('Success', 'User registered successfully!');
       
           // Navigate to the login screen
-          navigation.navigate('LoginPage');
+          navigation.navigate('Login');
         } catch (error) {
           // Display an error message
           Alert.alert('Error', error.message);

@@ -4,42 +4,14 @@ import { W3mButton } from '@web3modal/wagmi-react-native';
 import {Text, View, TouchableOpacity} from "react-native";
 import { ContractABI, ContractAddress } from '../../Constants/Constants';
 
-function IsWalletConnected({conected}){
-    const {address, isConnected, isDisconnected} = useAccount();
-  
-    const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
-        message: 'gm wagmi frens'
-      })
-      const [connectedStateNotified, setConnectedStateNotified] = useState(false);
-
-
-
-    useEffect(() => {
-        if (!connectedStateNotified && isConnected) {
-          conected = isConnected;
-          setConnectedStateNotified(true);
-        }
-      }, [isConnected, conected, connectedStateNotified]);
-
-    return (
-        <>
-        <View>
-        
-        <W3mButton />
-        </View>
-        </>
-    )
-}
-
 
 function StartElecctionContract({voter, candid}){
-    const {data, isError, isLoading, isSuccess} = useContractRead({
-        address: ContractAddress,
-        abi: ContractABI,
-        functionName:"vote",
-        args:[voter, candid]
-
-    });
+  const { data, isError,isLoading, isSuccess } = useContractWrite({
+    address: ContractAddress,
+    abi: ContractABI,
+    functionName: "initialize",
+    args: [voter, candid],
+  });
 
     console.log(JSON.stringify(data))
 
@@ -70,4 +42,4 @@ function GetResultContract(){
     )
 }
 
-export {IsWalletConnected, StartElecctionContract, GetResultContract};
+export {StartElecctionContract, GetResultContract};

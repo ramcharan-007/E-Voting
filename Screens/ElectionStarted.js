@@ -11,40 +11,40 @@ const ElectionStarted = ({navigation}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userCanVote, setUserCanVote] = useState(true);
 
-  useEffect(() => {
-    const fetchElectionStatus = async () => {
-      try {
-        const stateSnapshot = await get(ref(db, 'election/state'));
-        const status = stateSnapshot.val()?.status || 'noElections';
+  const fetchElectionStatus = async () => {
+    try {
+      const stateSnapshot = await get(ref(db, 'election/state'));
+      const status = stateSnapshot.val()?.status || 'noElections';
+      
+      if (status === 'ongoing') {
+        setIsElectionOngoing(true);
         
-        if (status === 'ongoing') {
-          setIsElectionOngoing(true);
-          
-          const candidatesSnapshot = await get(ref(db, 'election/candidates'));
-          const candidatesData = candidatesSnapshot.val();
-          
-          if (candidatesData) {
-            const candidateList = Object.keys(candidatesData).map((key) => ({
-              name: key,
-              voteCount: candidatesData[key].voteCount,
-            }));
-            setCandidates(candidateList);
-          }
-          
-          const canVote = await canUserVote();
-          setUserCanVote(canVote);
-          console.log("usercanvote",userCanVote)
-        } else {
-          setIsElectionOngoing(false);
+        const candidatesSnapshot = await get(ref(db, 'election/candidates'));
+        const candidatesData = candidatesSnapshot.val();
+        
+        if (candidatesData) {
+          const candidateList = Object.keys(candidatesData).map((key) => ({
+            name: key,
+            voteCount: candidatesData[key].voteCount,
+          }));
+          setCandidates(candidateList);
         }
         
-      } catch (error) {
-        Alert.alert('Error', `Failed to fetch election status: ${error.message}`);
-      } finally {
-        setIsLoading(false); // Stop loading after the fetch is complete
+        const canVote = await canUserVote();
+        setUserCanVote(canVote);
+        console.log("usercanvote",userCanVote)
+      } else {
+        setIsElectionOngoing(false);
       }
-    };
+      
+    } catch (error) {
+      Alert.alert('Error', `Failed to fetch election status: ${error.message}`);
+    } finally {
+      setIsLoading(false); // Stop loading after the fetch is complete
+    }
+  };
 
+  useEffect(() => {
     fetchElectionStatus();
   }, []);
 
@@ -82,6 +82,32 @@ const ElectionStarted = ({navigation}) => {
       );    
   }
 
+  // async function handleVote(candidateName) {
+  //   try {
+  //     const currentUser = firebase.auth().currentUser;
+  
+  //     if (!currentUser) {
+  //       throw new Error('User not logged in');
+  //     }
+  
+  //     const voterId = currentUser.uid; // Get the current user's UID
+  //     const voterRef = ref(db, `users/${voterId}`); // Reference to the voter in the database
+  //     const candidateRef = ref(db, `election/candidates/${candidateName}`); // Reference to the candidate
+  
+  //     // Update the candidate's vote count and the voter's `canVote` status
+  //     await Promise.all([
+  //       update(candidateRef, { voteCount: increment(1) }), // Increment vote count by 1
+  //       update(voterRef, { canVote: false }), // Set canVote to false
+  //     ]);
+  
+  //     Alert.alert('Success', `Voted for ${candidateName}`);
+  //   } catch (error) {
+  //     console.error('Error during voting:', error);
+  //     Alert.alert('Error', `Failed to record vote: ${error.message}`);
+  //   }
+  // }
+
+
   async function handleVote(candidateName) {
     try {
       const currentUser = firebase.auth().currentUser;
@@ -101,11 +127,15 @@ const ElectionStarted = ({navigation}) => {
       ]);
   
       Alert.alert('Success', `Voted for ${candidateName}`);
+  
+      // Refresh the page by fetching the latest election status
+      fetchElectionStatus();
     } catch (error) {
       console.error('Error during voting:', error);
       Alert.alert('Error', `Failed to record vote: ${error.message}`);
     }
   }
+  
 
   function onpress(name){
 

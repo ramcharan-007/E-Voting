@@ -57,7 +57,8 @@
     "solc": "^0.8.24",
     "viem": "1.21.4",
     "wagmi": "1.4.13",
-    "web3": "^4.6.0"
+    "web3": "^4.6.0",
+    "@types/react": "~18.2.79"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
