@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert,Dimensions,ActivityIndicator } from 'react-native';
-import { ref, update, get,increment } from "firebase/database";
+import { ref, onValue, set, update, get,increment} from "firebase/database";
 import {db, firebase} from "../Backend/config/config";
 import ElectionResults from "../Screens/Admin Screen/Result";
 
@@ -44,7 +44,35 @@ const ElectionStarted = ({navigation}) => {
     }
   };
 
+
+
+  const checkElectionStatus = async () => {
+    try {
+      // Fetch the current election state
+      const statusSnapshot = await get(ref(db, "election/state"));
+      const electionState = statusSnapshot.val();
+  
+      if (electionState && electionState.status === "ongoing") {
+        const currentTime = Date.now();
+        const electionEndTime = electionState.endTime;
+  
+        // If the current time is past the election end time, end the election
+        if (currentTime >= electionEndTime) {
+          await handleEndElection();
+        } else {
+          // Set a timeout to end the election when the time expires
+          setTimeout(() => {
+            handleEndElection();
+          }, electionEndTime - currentTime);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking election status:", error.message);
+    }
+  };
+
   useEffect(() => {
+    checkElectionStatus();
     fetchElectionStatus();
   }, []);
 
@@ -106,6 +134,65 @@ const ElectionStarted = ({navigation}) => {
   //     Alert.alert('Error', `Failed to record vote: ${error.message}`);
   //   }
   // }
+
+
+  
+
+
+  async function handleEndElection(){
+    try {
+      // Step 1: Read data from 'election/candidates'
+      const candidatesRef = ref(db, "election/candidates");
+      const snapshot = await get(candidatesRef);
+
+      // if (waitforResultTransaction) {
+      //   Alert.alert("Success!!", `Result recorded in blockchain`);
+      // }
+      resultFUnction();
+
+      async function resultFUnction() {
+        if (snapshot.exists()) {
+          const candidatesData = snapshot.val();
+
+          // Find the candidate with the highest votes
+          let highestVotes = -1; // Initialize with a low value
+          let winner = null; // No winner initially
+
+          // Iterate through the candidates to find the one with the most votes
+          for (const [name, details] of Object.entries(candidatesData)) {
+            if (details.voteCount > highestVotes) {
+              highestVotes = details.voteCount; // Update highest votes
+              winner = name; // Update winner
+            }
+          }
+
+          // Step 2: Generate a unique ID and write data to 'Result/uniqueID'
+          const uniqueID = Date.now().toString(); // Unique ID based on timestamp
+          await set(ref(db, `Result/${uniqueID}`), {
+            candidates: candidatesData, // Store all candidates
+            winner, // Store the name of the winner
+          });
+
+          // Step 3: Clear data in 'election/candidates'
+          await set(candidatesRef, null); // Setting to null removes the data
+
+          console.log(
+            "Candidates data transferred and cleared. and winner is ",
+            winner
+          );
+        } else {
+          console.warn("No candidates data found.");
+        }
+
+        // Update the status in the Firebase Realtime Database to "noElections"
+        await set(ref(db, "election/state"), "noElections");
+        setIsElectionOngoing(false);
+        console.log("Election status updated to noElections.");
+      }
+    } catch (error) {
+      console.error("Error during end election process:", error);
+    }
+  };
 
 
   async function handleVote(candidateName) {

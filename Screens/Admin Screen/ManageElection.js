@@ -9,6 +9,7 @@ import {
   Dimensions,
   Alert,
   Button,
+  TextInput,
 } from "react-native";
 import { ref, onValue, set, update, get, push } from "firebase/database";
 import { db } from "../../Backend/config/config";
@@ -24,6 +25,7 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { ContractABI, ContractAddress } from "../../Constants/Constants";
+import { AppState } from 'react-native';
 
 const ManageElection = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +40,7 @@ const ManageElection = () => {
   const [isElectionOngoing, setIsElectionOngoing] = useState(false);
   const [candidatesWithVotes, setCandidatesWithVotes] = useState([]);
   const { address, isConnected, isDisconnected } = useAccount();
-
+  const [electionInterval, setElectionInterval] = useState(0);
   // const { data, isError, isLoading:isLoadingSignature, isSuccess, signMessage } = useSignMessage({
   //   message: 'gm wagmi frens'
   // })
@@ -83,6 +85,7 @@ const ManageElection = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
+    checkElectionStatus();
     const fetchElectionStatus = async () => {
       try {
         const snapshot = await get(ref(db, "election/state"));
@@ -175,74 +178,57 @@ const ManageElection = () => {
   };
 
   const handleStartElection = async () => {
-    // Fetch the current election status
-    const statusSnapshot = await get(ref(db, "election/state"));
-
-    const currentStatus = statusSnapshot.val()
-      ? statusSnapshot.val().status
-      : null;
-
-    // Check if there is an ongoing election
-    if (currentStatus && currentStatus === "ongoing") {
-      setIsElectionOngoing(true);
-      // Alert the user that an election is already ongoing
-      Alert.alert(
-        "An election is already ongoing!!!",
-        "Kindly Start an Election once the present election is closed"
-      );
-      return; // Exit without starting a new election
-    }
-
     try {
-      // Set the election state to 'ongoing'
-      write();
-
-      // Wait for the transaction to be confirmed
-      unknow();
-
-      async function unknow() {
-        await set(ref(db, "election/state"), {
-          status: "ongoing",
-        });
-
-        // Create a new object with each candidate's name as a key and their details (including `voteCount`) as the value
-        const candidatesWithVoteCount = {};
-
-        // Loop through the candidate names and add an entry for each with `voteCount` set to 0
-        selectedCandidates.forEach((name) => {
-          console.log(name);
-          candidatesWithVoteCount[name] = {
-            voteCount: 0,
-          };
-        });
+      // Fetch the current election status
+      const statusSnapshot = await get(ref(db, "election/state"));
+      const currentStatus = statusSnapshot.val() ? statusSnapshot.val().status : null;
+  
+      // Check if there is an ongoing election
+      if (currentStatus && currentStatus === "ongoing") {
         setIsElectionOngoing(true);
-        console.log(candidatesWithVoteCount);
-        // Set the candidates in the database with the `voteCount` initialized to 0
-        set(ref(db, "election/candidates"), candidatesWithVoteCount)
-          .then(() => {
-            console.log("Candidates added with initial vote count.");
-          })
-          .catch((error) => {
-            console.error("Error setting candidates:", error);
-          });
-
-        // Set canVote to true for all selected voters
-        const updates = {}; // To hold updates for each voter
-
-        selectedVoters.forEach((uid) => {
-          updates[`users/${uid}/canVote`] = true;
-        });
-
-        await update(ref(db), updates);
-        Alert.alert("Alert","Election Initiated");
+        Alert.alert(
+          "An election is already ongoing!!!",
+          "Kindly Start an Election once the present election is closed"
+        );
+        return; // Exit without starting a new election
       }
-      // Navigate to StartEletion
+      
+      write();
+      // Set the election state to 'ongoing' with a time duration
+      const electionDurationInMinutes = electionInterval; // e.g., 60 minutes
+      const electionEndTime = Date.now() + electionDurationInMinutes * 60 * 1000;
+  
+      await set(ref(db, "election/state"), {
+        status: "ongoing",
+        endTime: electionEndTime,
+      });
+  
+      // Initialize candidates with vote count set to 0
+      const candidatesWithVoteCount = {};
+      selectedCandidates.forEach(name => {
+        candidatesWithVoteCount[name] = { voteCount: 0 };
+      });
+      await set(ref(db, "election/candidates"), candidatesWithVoteCount);
+  
+      // Set canVote to true for all selected voters
+      const updates = {};
+      selectedVoters.forEach(uid => {
+        updates[`users/${uid}/canVote`] = true;
+      });
+      await update(ref(db), updates);
+  
+      setIsElectionOngoing(true);
+      Alert.alert("Alert", "Election Initiated");
+  
+      // Navigate to StartElection
       navigation.navigate("StartEletion");
     } catch (error) {
-      console.log(error.message);
-      Alert.alert("Error", `Failed to start the election: ${error.message}`);
+      console.error("Failed to start the election:", error.message + electionInterval);
+      Alert.alert("Error", `Failed to start the election: ${error.message} ${electionInterval}`);
     }
   };
+  
+
 
   const handleEndElection = async () => {
     try {
@@ -298,6 +284,33 @@ const ManageElection = () => {
       console.error("Error during end election process:", error);
     }
   };
+
+
+  const checkElectionStatus = async () => {
+    try {
+      // Fetch the current election state
+      const statusSnapshot = await get(ref(db, "election/state"));
+      const electionState = statusSnapshot.val();
+  
+      if (electionState && electionState.status === "ongoing") {
+        const currentTime = Date.now();
+        const electionEndTime = electionState.endTime;
+  
+        // If the current time is past the election end time, end the election
+        if (currentTime >= electionEndTime) {
+          await handleEndElection();
+        } else {
+          // Set a timeout to end the election when the time expires
+          setTimeout(() => {
+            handleEndElection();
+          }, electionEndTime - currentTime);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking election status:", error.message);
+    }
+  };
+  
 
   const renderModalContent = () => (
     <>
@@ -498,6 +511,23 @@ const ManageElection = () => {
               </View>
             )}
             keyExtractor={(item) => item.id}
+          />
+          <View>
+            <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              margin: 10,
+            }}
+            >Set Election Interval</Text>
+          </View>
+          <TextInput 
+            value={electionInterval}
+            onChangeText={(e) => setElectionInterval(e)}
+            placeholder="Election internal in minutes"
+            keyboardType="numeric"
+            style={{textAlign:"center", margin:10, borderColor:"black",  padding:10, borderWidth:2}}
           />
           <TouchableOpacity
             style={styles.modalButton}
