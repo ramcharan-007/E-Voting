@@ -57,7 +57,7 @@ const LoginPage = ({ navigation }) => {
     }
   };
 
-//To set admi privileage
+// To set admi privileage
   // const setAdminStatus = async (uid, isAdmin) => {
   //   try {
   //     await update(ref(db, `users/${uid}`), { isAdmin });
@@ -67,8 +67,8 @@ const LoginPage = ({ navigation }) => {
   //   }
   // };
   
-  // // Example: Set a user as admin
-  // setAdminStatus('jkuevs7Gtpfj2m9FWLvwKwg5DIR2', true); // Set to false to revoke admin privileges
+  // // // Example: Set a user as admin
+  // setAdminStatus('5Q03C5sX4KbGa24DrYqIqOTiT8n1', true); // Set to false to revoke admin privileges
 
   const handleCancel = () => {
     setEmail("");

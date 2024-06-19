@@ -25,7 +25,8 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { ContractABI, ContractAddress } from "../../Constants/Constants";
-import { AppState } from 'react-native';
+import { AppState } from "react-native";
+import axios from "axios";
 
 const ManageElection = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -177,12 +178,27 @@ const ManageElection = () => {
     }
   };
 
+  async function EmailSender(emailAddresses) {
+    try {
+      const response = await axios.post("http://localhost:3000/send-email", {
+        to: emailAddresses,
+        subject: "Election Started",
+        text: "An election has been initiated. You are eligible to vote.",
+      });
+      console.log("Emails sent successfully:", response.data);
+    } catch (error) {
+      console.error("Error sending emails:", error);
+    }
+  }
+
   const handleStartElection = async () => {
     try {
       // Fetch the current election status
       const statusSnapshot = await get(ref(db, "election/state"));
-      const currentStatus = statusSnapshot.val() ? statusSnapshot.val().status : null;
-  
+      const currentStatus = statusSnapshot.val()
+        ? statusSnapshot.val().status
+        : null;
+
       // Check if there is an ongoing election
       if (currentStatus && currentStatus === "ongoing") {
         setIsElectionOngoing(true);
@@ -192,43 +208,58 @@ const ManageElection = () => {
         );
         return; // Exit without starting a new election
       }
-      
+
       write();
       // Set the election state to 'ongoing' with a time duration
       const electionDurationInMinutes = electionInterval; // e.g., 60 minutes
-      const electionEndTime = Date.now() + electionDurationInMinutes * 60 * 1000;
-  
+      const electionEndTime =
+        Date.now() + electionDurationInMinutes * 60 * 1000;
+
       await set(ref(db, "election/state"), {
         status: "ongoing",
         endTime: electionEndTime,
       });
-  
+
       // Initialize candidates with vote count set to 0
       const candidatesWithVoteCount = {};
-      selectedCandidates.forEach(name => {
+      selectedCandidates.forEach((name) => {
         candidatesWithVoteCount[name] = { voteCount: 0 };
       });
       await set(ref(db, "election/candidates"), candidatesWithVoteCount);
-  
+
+      const emailAddresses = [];
+      for (const uid of selectedVoters) {
+        const userSnapshot = await get(ref(db, `users/${uid}/email`));
+        if (userSnapshot.exists()) {
+          emailAddresses.push(userSnapshot.val());
+        }
+      }
+
       // Set canVote to true for all selected voters
       const updates = {};
-      selectedVoters.forEach(uid => {
+      selectedVoters.forEach((uid) => {
         updates[`users/${uid}/canVote`] = true;
       });
       await update(ref(db), updates);
-  
+
+      await EmailSender(emailAddresses);
+
       setIsElectionOngoing(true);
       Alert.alert("Alert", "Election Initiated");
-  
+
       // Navigate to StartElection
       navigation.navigate("StartEletion");
     } catch (error) {
-      console.error("Failed to start the election:", error.message + electionInterval);
-      Alert.alert("Error", `Failed to start the election: ${error.message} ${electionInterval}`);
+      console.error(
+        "Failed to start the election:",
+        error.message + electionInterval
+      );
+      Alert.alert(
+        "Error",
+        `Failed to start the election: ${error.message} ${electionInterval}`
+      );
     }
   };
-  
-
 
   const handleEndElection = async () => {
     try {
@@ -285,17 +316,16 @@ const ManageElection = () => {
     }
   };
 
-
   const checkElectionStatus = async () => {
     try {
       // Fetch the current election state
       const statusSnapshot = await get(ref(db, "election/state"));
       const electionState = statusSnapshot.val();
-  
+
       if (electionState && electionState.status === "ongoing") {
         const currentTime = Date.now();
         const electionEndTime = electionState.endTime;
-  
+
         // If the current time is past the election end time, end the election
         if (currentTime >= electionEndTime) {
           await handleEndElection();
@@ -310,7 +340,6 @@ const ManageElection = () => {
       console.error("Error checking election status:", error.message);
     }
   };
-  
 
   const renderModalContent = () => (
     <>
@@ -446,17 +475,19 @@ const ManageElection = () => {
           </Text>
           <FlatList
             data={voters}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => toggleVoterSelection(item.id)}
-                style={[
-                  styles.itemContainer,
-                  selectedVoters.includes(item.id) && styles.selectedItem,
-                ]}
-              >
-                <Text>{item.name}</Text>
-              </TouchableOpacity>
-            )}
+            renderItem={({ item }) =>
+              item.name ? (
+                <TouchableOpacity
+                  onPress={() => toggleVoterSelection(item.id)}
+                  style={[
+                    styles.itemContainer,
+                    selectedVoters.includes(item.id) && styles.selectedItem,
+                  ]}
+                >
+                  <Text>{item.name}</Text>
+                </TouchableOpacity>
+              ) : null
+            }
             keyExtractor={(item) => item.id}
           />
           <TouchableOpacity
@@ -514,24 +545,40 @@ const ManageElection = () => {
           />
           <View>
             <Text
-            style={{
-              textAlign: "center",
-              fontSize: 30,
-              fontWeight: "bold",
-              margin: 10,
-            }}
-            >Set Election Interval</Text>
+              style={{
+                textAlign: "center",
+                fontSize: 30,
+                fontWeight: "bold",
+                margin: 10,
+              }}
+            >
+              Set Election Interval
+            </Text>
           </View>
-          <TextInput 
+          <TextInput
             value={electionInterval}
             onChangeText={(e) => setElectionInterval(e)}
             placeholder="Election internal in minutes"
             keyboardType="numeric"
-            style={{textAlign:"center", margin:10, borderColor:"black",  padding:10, borderWidth:2}}
+            style={{
+              textAlign: "center",
+              margin: 10,
+              borderColor: "black",
+              padding: 10,
+              borderWidth: 2,
+            }}
           />
           <TouchableOpacity
             style={styles.modalButton}
-            onPress={handleStartElection}
+            onPress={() => {
+              if (selectedCandidates.length >= 2 && selectedVoters.length >= 1) {
+                handleStartElection();
+              } else {
+                alert(
+                  "Please select at least 2 candidates and more than 1 voter."
+                );
+              }
+            }}
           >
             <Text style={styles.modalButtonText}>Start Election</Text>
           </TouchableOpacity>
